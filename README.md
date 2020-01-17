@@ -12,3 +12,9 @@
 - [Anekdoodit](Osa1/anekdootit)  
 - [Kurssitiedot](Osa1/kurssitiedot)  
 - [Unicafe](Osa1/unicafe)
+
+## Osa 2
+
+- [Kurssitiedot](Osa2/kurssitiedot)  
+- [Maiden tiedot](Osa2/maiden_tiedot)  
+- [Puhelinluettelo](Osa2/puhelinluettelo)
