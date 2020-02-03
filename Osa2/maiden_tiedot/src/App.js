@@ -6,7 +6,7 @@ const Result = ({name, capital, population, languages, flag}) => {
   const [weather, setWeather] = useState({temp: "loading", icon:null, wind: "loading"})
 
   useEffect(() => {
-    axios.get("http://api.weatherstack.com/current?access_key=cffc689525c7b4face1c25c7dd2cefc0&query=" + capital)
+    axios.get("http://api.weatherstack.com/current?access_key=" + process.env.REACT_APP_API_KEY + "&query=" + capital)
         .then( response => {
           console.log()
           setWeather({temp: response.data.current.temperature, icon:response.data.current.weather_icons[0], wind: response.data.current.wind_speed + " direction " + response.data.current.wind_dir})

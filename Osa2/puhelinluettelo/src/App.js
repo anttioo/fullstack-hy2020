@@ -1,5 +1,6 @@
 import React, {useState, useEffect} from 'react';
-import axios from 'axios'
+import personService from './services/person'
+import './styles.css'
 
 const Filter = ({filter, setFilter}) => {
     return <>
@@ -7,7 +8,7 @@ const Filter = ({filter, setFilter}) => {
     </>
 }
 
-const PersonFrom = ({newName, setNewName, addPerson, newNumber, setNewNumber}) => {
+const PersonFrom = ({newName, setNewName, addPerson, newNumber, setNewNumber }) => {
 
     return <form>
         <div>
@@ -20,28 +21,33 @@ const PersonFrom = ({newName, setNewName, addPerson, newNumber, setNewNumber}) =
     </form>
 }
 
-const Persons = ({persons}) => {
+const Persons = ({persons,  removePerson}) => {
     return <ul>
         {persons.map(person => (
-                <li>{person.name} {person.number}</li>
+                <li key={person.id}>{person.name} {person.number} <button onClick={() => removePerson(person.id)}>delete</button></li>
             )
         )}
     </ul>
+}
+
+const Notification = ({msg, style}) => {
+    return <div id="notification" className={style}>{msg}</div>
 }
 
 const App = () => {
     const [persons, setPersons] = useState([])
 
     useEffect(() => {
-        axios.get( "http://localhost:3001/persons")
-            .then( response => {
-                setPersons(response.data)
+        personService.getAll()
+            .then( all => {
+                setPersons(all)
             })
-    })
+    },[])
 
     const [newName, setNewName] = useState('')
     const [newNumber, setNewNumber] = useState('')
     const [filter, setFilter] = useState('')
+    const [notification, setNotification] = useState(null)
 
     const filteredPersons = persons.filter( person => {
         const name = person.name.toLowerCase()
@@ -49,20 +55,59 @@ const App = () => {
 
     })
 
-    const addPerson = (e) => {
+    const addPerson = e => {
         e.preventDefault()
+
         const sameNamed = persons.filter( person => person.name.toLowerCase() === newName.toLowerCase()).length > 0
 
         if (sameNamed) {
-            alert(`${newName} is already added to phonebook`)
+            const oldId = persons.filter( person => person.name.toLowerCase() === newName.toLowerCase())[0].id
+            personService.update(oldId, {name: newName, number: newNumber})
+                .then( modifiedPerson => {
+                    setPersons( persons.map( person => {
+                        return person.id !== modifiedPerson.id ? person : modifiedPerson
+
+                    }))
+                    showNotification("success", `Edited ${newName}`)
+                })
             return
         }
-        setPersons([...persons, {name: newName, number: newNumber}])
+        personService.create({name: newName, number: newNumber})
+            .then( created => {
+                setPersons([...persons, created ])
+                showNotification("success", `Added ${newName}`)
+            })
+    }
+
+    const removePerson = id => {
+        const name = persons.filter( person => person.id === id)[0].name
+        if ( window.confirm(`Delete ${name} ?`) ) {
+            personService.remove(id)
+                .then( () => {
+                        setPersons(persons.filter( person => person.id !== id))
+                        showNotification("success", `Deleted ${name}`)
+                })
+                .catch( ( error ) => {
+                    if (error.response.status === 404) {
+                        showNotification("error", `Information of ${name} has already been removed from server`)
+                    }
+                })
+
+        }
+
+    }
+
+    const showNotification = (style, msg) => {
+        setNotification({ style, msg })
+        setTimeout(() => {
+            setNotification(null)
+        }, 3000)
     }
 
     return (
         <div>
             <h2>Phonebook</h2>
+            { notification ? <Notification style={notification.style} msg={notification.msg}/> : null }
             <Filter filter={filter} setFilter={setFilter}/>
             <h2>Add a new</h2>
             <PersonFrom
@@ -70,9 +115,10 @@ const App = () => {
                 setNewName={setNewName}
                 newNumber={newNumber}
                 setNewNumber={setNewNumber}
+
                 addPerson={addPerson}/>
             <h2>Numbers</h2>
-            <Persons persons={filteredPersons}/>
+            <Persons persons={filteredPersons} removePerson={removePerson}/>
         </div>
     )
 
