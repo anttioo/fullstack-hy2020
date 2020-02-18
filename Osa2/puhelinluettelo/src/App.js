@@ -77,6 +77,9 @@ const App = () => {
                 setPersons([...persons, created ])
                 showNotification("success", `Added ${newName}`)
             })
+            .catch( error => {
+            showNotification("error", JSON.stringify(error.response.data))
+        })
     }
 
     const removePerson = id => {
