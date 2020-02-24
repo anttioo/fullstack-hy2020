@@ -22,8 +22,6 @@ blogRouter.post('', async (request, response) => {
         response.send()
         return
     }
-
-
     const post = await blog.save()
     user.blogs = user.blogs.concat(post._id)
     await user.save()
@@ -43,12 +41,15 @@ blogRouter.delete('/:id', async  (request, response) => {
     if (blog.user.toString() !== user.id.toString()) {
         return response.status(401).json({ error: 'unauthorized' })
     }
+
+    await Blog.findOneAndDelete({ _id: request.params.id })
     response.status(204).end()
 })
 
 blogRouter.put('/:id', async  (request, response) => {
     const res = await Blog.findByIdAndUpdate(request.params.id, request.body)
-    response.json(res.toJSON())
+    const returning = await Blog.findById(res.id).populate("user", {username: 1, name: 1, id: 1})
+    response.json(returning.toJSON())
 })
 
 
